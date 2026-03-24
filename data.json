@@ -1,0 +1,30 @@
+{
+  "products": {
+    "PEP-20V": { "name": "PEP-20V", "palletCapacity": 48 },
+    "PEP-10D": { "name": "PEP-10D", "palletCapacity": 96 },
+    "NKE-10N": { "name": "NKE-10N", "palletCapacity": 182 },
+    "NKPE-5RX": { "name": "NKPE-5RX", "palletCapacity": 162 }
+  },
+  "containerTypes": [
+    { "type": "large", "capacity": 20, "label": "大型集装箱 (20托盘)" },
+    { "type": "small", "capacity": 10, "label": "小型集装箱 (10托盘)" }
+  ],
+  "orders": [
+    { "id": 1, "productId": "PEP-20V", "shipDate": "2026-04-19", "quantity": 3500, "containerId": null, "palletIndex": 0 },
+    { "id": 2, "productId": "PEP-10D", "shipDate": "2026-04-20", "quantity": 4200, "containerId": null, "palletIndex": 1 },
+    { "id": 3, "productId": "NKE-10N", "shipDate": "2026-04-19", "quantity": 3800, "containerId": null, "palletIndex": 2 },
+    { "id": 4, "productId": "NKPE-5RX", "shipDate": "2026-04-21", "quantity": 3200, "containerId": null, "palletIndex": 3 }
+  ],
+  "containers": [
+    { "id": 401, "type": "large", "capacity": 20, "occupancy": [] },
+    { "id": 402, "type": "large", "capacity": 20, "occupancy": [] },
+    { "id": 501, "type": "small", "capacity": 10, "occupancy": [] },
+    { "id": 502, "type": "small", "capacity": 10, "occupancy": [] },
+    { "id": 503, "type": "large", "capacity": 20, "occupancy": [] },
+    { "id": 504, "type": "large", "capacity": 20, "occupancy": [] },
+    { "id": 505, "type": "small", "capacity": 10, "occupancy": [] },
+    { "id": 506, "type": "large", "capacity": 20, "occupancy": [] }
+  ],
+  "currentProductNumber": 101,
+  "orderAllocations": []
+}

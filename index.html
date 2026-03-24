@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>初田-集装箱分配模块</title>
+  <style>
+    :root {
+      --bg-primary: #f8f9fa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #e9ecef;
+      --bg-card: #ffffff;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --text-muted: #adb5bd;
+      --border-color: #dee2e6;
+      --accent-orange: #ff6b35;
+      --accent-orange-light: #fff0eb;
+      --accent-cyan: #00b894;
+      --accent-cyan-light: #e6faf5;
+      --accent-blue: #4a9eff;
+      --accent-purple: #9b5de5;
+      --accent-pink: #f15bb5;
+      --accent-yellow: #ffc107;
+      --accent-yellow-light: #fff9e6;
+      --accent-red: #ff4757;
+      --accent-green: #00b894;
+      --accent-green-light: #e6faf5;
+      --danger: #ff4757;
+      --success: #00b894;
+      --warning: #ffa502;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-orange), #ff8f5a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-orange);
+      color: #fff;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text-primary);
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .view-container {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: var(--accent-orange);
+      border-radius: 2px;
+    }
+
+    .panel-body {
+      padding: 20px;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+
+    .panel-body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .panel-body::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    .panel-body::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .order-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+      cursor: grab;
+    }
+
+    .order-card:hover {
+      border-color: var(--accent-orange);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .order-card.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .product-badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .ship-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .order-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .order-info-item {
+      background: var(--bg-tertiary);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .order-info-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .order-info-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .pallet-info {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .pallet-info-header {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .pallet-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pallet-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pallet-badge.allocated {
+      background: var(--accent-cyan-light);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 184, 148, 0.3);
+    }
+
+    .pallet-badge.unallocated {
+      background: var(--accent-orange-light);
+      color: var(--accent-orange);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+    }
+
+    .container-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .container-box {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .container-box.drag-over {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 30px rgba(0, 184, 148, 0.3);
+    }
+
+    .container-box.full {
+      border-color: var(--accent-green);
+    }
+
+    .container-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+    }
+
+    .container-id {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .container-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .container-type-select {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+    }
+
+    .container-type-badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .container-status {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .container-status.available {
+      color: var(--accent-cyan);
+    }
+
+    .container-status.full {
+      color: var(--accent-green);
+    }
+
+    .container-pallets {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      min-height: 180px;
+    }
+
+    .container-box.small .container-pallets {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .pallet-slot {
+      aspect-ratio: 1;
+      background: var(--bg-tertiary);
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      position: relative;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .pallet-slot.allocated {
+      border-style: solid;
+      cursor: grab;
+      color: #fff;
+    }
+
+    .pallet-slot.allocated:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+
+    .pallet-slot.allocated.dragging {
+      opacity: 0.5;
+    }
+
+    .pallet-slot .product-name {
+      font-size: 9px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      text-align: center;
+    }
+
+    .pallet-slot .pallet-qty {
+      font-size: 8px;
+      opacity: 0.9;
+    }
+
+    .pallet-slot .pallet-date {
+      font-size: 7px;
+      opacity: 0.85;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px 20px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-orange);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .report-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .report-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .report-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .report-table th {
+      background: var(--bg-tertiary);
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .report-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .report-table tr:hover td {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .report-table .container-cell {
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .report-table .product-cell {
+      font-weight: 600;
+    }
+
+    .report-table .range-cell {
+      font-family: 'DM Sans', monospace;
+      color: var(--accent-orange);
+    }
+
+    .report-table .merged-cell {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .color-1 { background: linear-gradient(135deg, #ff6b35, #ff8f5a); }
+    .color-2 { background: linear-gradient(135deg, #4a9eff, #6bb3ff); }
+    .color-3 { background: linear-gradient(135deg, #9b5de5, #b57efc); }
+    .color-4 { background: linear-gradient(135deg, #f15bb5, #ff7dcb); }
+    .color-5 { background: linear-gradient(135deg, #00b894, #2eedc2); }
+    .color-6 { background: linear-gradient(135deg, #ffc107, #ffda44); }
+    .color-7 { background: linear-gradient(135deg, #ff4757, #ff6b7a); }
+    .color-8 { background: linear-gradient(135deg, #00b894, #54e08a); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent-orange);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #ff8f5a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .btn-reset {
+      background: var(--bg-secondary);
+      color: var(--accent-red);
+      border: 1px solid var(--accent-red);
+    }
+
+    .btn-reset:hover {
+      background: #fff0f0;
+    }
+
+    .header-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+      
+      .container-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">
+        <h1>初田-集装箱分配模块</h1>
+      </div>
+      <div class="header-actions">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="allocation">配置画面</button>
+          <button class="tab-btn" data-tab="report">报表画面</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="allocation-view" class="view-container active">
+      <div class="main-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">订单列表</div>
+            <div class="header-btn-group">
+              <button class="btn btn-primary" onclick="autoAllocate()">自动配置</button>
+              <button class="btn btn-reset" onclick="resetAllocation()">重置</button>
+            </div>
+          </div>
+          <div class="panel-body" id="orders-list">
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">集装箱区域</div>
+            <button class="btn btn-secondary" onclick="addContainer()">+ 添加集装箱</button>
+          </div>
+          <div class="panel-body">
+            <div class="stats-bar">
+              <div class="stat-item">
+                <span class="stat-value" id="total-containers">0</span>
+                <span class="stat-label">集装箱数</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="used-containers">0</span>
+                <span class="stat-label">已使用</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="total-pallets">0</span>
+                <span class="stat-label">托盘总数</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="unallocated-pallets">0</span>
+                <span class="stat-label">未配置</span>
+              </div>
+            </div>
+            <div class="container-grid" id="container-grid">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="report-view" class="view-container">
+      <div class="report-table-container">
+        <div class="report-header">
+          <div class="report-title">出货报表 - 制品编号分配一览</div>
+        </div>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>产品名</th>
+              <th>出荷日期</th>
+              <th>出荷数量</th>
+              <th>集装箱编号</th>
+              <th>制品编号开始</th>
+              <th>制品编号结束</th>
+            </tr>
+          </thead>
+          <tbody id="report-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let appData = null;
+    const orderColors = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5', 'color-6', 'color-7', 'color-8'];
+
+    async function loadData() {
+      const response = await fetch('./data.json');
+      appData = await response.json();
+      initializeData();
+      render();
+    }
+
+    function initializeData() {
+      appData.orders.forEach(order => {
+        const product = appData.products[order.productId];
+        order.totalPallets = Math.ceil(order.quantity / product.palletCapacity);
+        order.allocatedPallets = 0;
+        order.unallocatedPallets = order.totalPallets;
+        order.pallets = [];
+        
+        for (let i = 0; i < order.totalPallets; i++) {
+          order.pallets.push({
+            id: `${order.id}-${i}`,
+            orderId: order.id,
+            palletIndex: i,
+            containerId: null,
+            quantity: Math.min(product.palletCapacity, order.quantity - i * product.palletCapacity)
+          });
+        }
+      });
+
+      appData.containers.forEach(c => {
+        c.occupancy = [];
+      });
+
+      updateStats();
+    }
+
+    function resetAllocation() {
+      appData.orders.forEach(order => {
+        order.allocatedPallets = 0;
+        order.unallocatedPallets = order.totalPallets;
+        order.pallets.forEach(p => {
+          p.containerId = null;
+        });
+      });
+      
+      appData.containers.forEach(c => {
+        c.occupancy = [];
+      });
+      
+      render();
+    }
+
+    function updateStats() {
+      const containers = appData.containers;
+      const usedContainers = containers.filter(c => c.occupancy.length > 0).length;
+      
+      let totalPallets = 0;
+      let allocatedPallets = 0;
+      
+      appData.orders.forEach(order => {
+        totalPallets += order.totalPallets;
+        allocatedPallets += order.allocatedPallets;
+      });
+
+      document.getElementById('total-containers').textContent = containers.length;
+      document.getElementById('used-containers').textContent = usedContainers;
+      document.getElementById('total-pallets').textContent = totalPallets;
+      document.getElementById('unallocated-pallets').textContent = totalPallets - allocatedPallets;
+    }
+
+    function render() {
+      renderOrdersList();
+      renderContainers();
+      updateStats();
+    }
+
+    function renderOrdersList() {
+      const container = document.getElementById('orders-list');
+      container.innerHTML = '';
+
+      appData.orders.forEach(order => {
+        const product = appData.products[order.productId];
+        const allocatedCount = order.allocatedPallets;
+        const unallocatedCount = order.unallocatedPallets;
+
+        const containerAllocations = {};
+        order.pallets.forEach(p => {
+          if (p.containerId) {
+            if (!containerAllocations[p.containerId]) {
+              containerAllocations[p.containerId] = [];
+            }
+            containerAllocations[p.containerId].push(p);
+          }
+        });
+
+        let palletBadges = '';
+        const sortedContainers = Object.keys(containerAllocations).sort((a, b) => parseInt(a) - parseInt(b));
+        sortedContainers.forEach(cid => {
+          const pallets = containerAllocations[cid];
+          const totalQty = pallets.reduce((sum, p) => sum + p.quantity, 0);
+          palletBadges += `<span class="pallet-badge allocated">集装箱${cid}: ${pallets.length}托盘 (${totalQty}本)</span>`;
+        });
+        if (unallocatedCount > 0) {
+          palletBadges += `<span class="pallet-badge unallocated">未分配: ${unallocatedCount}托盘</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        card.draggable = true;
+        card.dataset.orderId = order.id;
+        card.innerHTML = `
+          <div class="order-card-header">
+            <span class="product-badge ${orderColors[order.id % orderColors.length]}">${order.productId}</span>
+            <span class="ship-date">出荷日期: ${order.shipDate}</span>
+          </div>
+          <div class="order-info">
+            <div class="order-info-item">
+              <div class="order-info-label">出荷数量</div>
+              <div class="order-info-value">${order.quantity} 本</div>
+            </div>
+            <div class="order-info-item">
+              <div class="order-info-label">托盘容量</div>
+              <div class="order-info-value">${product.palletCapacity}本/托</div>
+            </div>
+          </div>
+          <div class="pallet-info">
+            <div class="pallet-info-header">托盘分配情况</div>
+            <div class="pallet-badges">
+              ${palletBadges || '<span class="pallet-badge unallocated">未分配</span>'}
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('dragstart', (e) => handleOrderDragStart(e, order));
+        card.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderContainers() {
+      const container = document.getElementById('container-grid');
+      container.innerHTML = '';
+
+      appData.containers.forEach(c => {
+        const typeLabel = c.type === 'large' ? '大型(20托)' : '小型(10托)';
+        const remaining = c.capacity - c.occupancy.length;
+        const isFull = remaining === 0;
+
+        const box = document.createElement('div');
+        box.className = `container-box ${isFull ? 'full' : ''}`;
+        box.dataset.containerId = c.id;
+
+        let slotsHtml = '';
+        for (let i = 0; i < c.capacity; i++) {
+          const pallet = c.occupancy[i];
+          if (pallet) {
+            const order = appData.orders.find(o => o.id === pallet.orderId);
+            slotsHtml += `
+              <div class="pallet-slot allocated ${orderColors[order.id % orderColors.length]}" 
+                   draggable="true"
+                   data-pallet-id="${pallet.id}"
+                   data-order-id="${order.id}">
+                <span class="product-name">${order.productId}</span>
+                <span class="pallet-qty">${pallet.quantity}本</span>
+                <span class="pallet-date">${order.shipDate}</span>
+              </div>
+            `;
+          } else {
+            slotsHtml += `<div class="pallet-slot empty"></div>`;
+          }
+        }
+
+        box.innerHTML = `
+          <div class="container-header">
+            <div class="container-id">
+              <span>${c.id}</span>
+              <select class="container-type-select" onchange="changeContainerType(${c.id}, this.value)">
+                <option value="large" ${c.type === 'large' ? 'selected' : ''}>大型(20托)</option>
+                <option value="small" ${c.type === 'small' ? 'selected' : ''}>小型(10托)</option>
+              </select>
+            </div>
+            <div class="container-controls">
+              <div class="container-status ${isFull ? 'full' : 'available'}">
+                ${isFull ? '已满' : `${remaining}位剩余`}
+              </div>
+            </div>
+          </div>
+          <div class="container-pallets">
+            ${slotsHtml}
+          </div>
+        `;
+
+        box.addEventListener('dragover', (e) => handleContainerDragOver(e, c));
+        box.addEventListener('dragleave', (e) => handleContainerDragLeave(e, c));
+        box.addEventListener('drop', (e) => handleContainerDrop(e, c));
+
+        const slots = box.querySelectorAll('.pallet-slot.allocated');
+        slots.forEach(slot => {
+          slot.addEventListener('dragstart', handlePalletDragStart);
+          slot.addEventListener('dragend', handlePalletDragEnd);
+        });
+
+        container.appendChild(box);
+      });
+    }
+
+    function changeContainerType(containerId, newType) {
+      const container = appData.containers.find(c => c.id === containerId);
+      if (!container) return;
+
+      const newCapacity = newType === 'large' ? 20 : 10;
+      
+      if (newCapacity < container.occupancy.length) {
+        alert('无法缩小容器类型，因为已有托盘被分配！');
+        container.type = container.type === 'large' ? 'small' : 'large';
+        render();
+        return;
+      }
+
+      container.type = newType;
+      container.capacity = newCapacity;
+      render();
+    }
+
+    function handleOrderDragStart(e, order) {
+      e.dataTransfer.setData('orderId', order.id);
+      e.dataTransfer.setData('source', 'order');
+      e.target.classList.add('dragging');
+    }
+
+    function handlePalletDragStart(e) {
+      draggedPalletInfo = {
+        palletId: e.target.dataset.palletId,
+        orderId: e.target.dataset.orderId
+      };
+      e.target.classList.add('dragging');
+      e.dataTransfer.setData('palletId', e.target.dataset.palletId);
+      e.dataTransfer.setData('orderId', e.target.dataset.orderId);
+      e.dataTransfer.setData('source', 'container');
+    }
+
+    function handlePalletDragEnd(e) {
+      e.target.classList.remove('dragging');
+    }
+
+    function handleContainerDragOver(e, container) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleContainerDragLeave(e, container) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleContainerDrop(e, container) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+
+      const source = e.dataTransfer.getData('source');
+
+      if (source === 'order') {
+        const orderId = parseInt(e.dataTransfer.getData('orderId'));
+        const order = appData.orders.find(o => o.id === orderId);
+        
+        if (!order) return;
+
+        const unallocatedPallets = order.pallets.filter(p => !p.containerId);
+        
+        for (let pallet of unallocatedPallets) {
+          if (container.occupancy.length < container.capacity) {
+            pallet.containerId = container.id;
+            container.occupancy.push(pallet);
+            order.allocatedPallets++;
+            order.unallocatedPallets--;
+          } else {
+            break;
+          }
+        }
+      } else if (source === 'container') {
+        const palletId = e.dataTransfer.getData('palletId');
+        movePallet(palletId, container.id);
+      }
+
+      render();
+    }
+
+    function movePallet(palletId, newContainerId) {
+      const newContainer = appData.containers.find(c => c.id === parseInt(newContainerId));
+      const order = appData.orders.find(o => o.pallets.some(p => p.id === palletId));
+      const pallet = order.pallets.find(p => p.id === palletId);
+      const oldContainerId = pallet.containerId;
+
+      if (oldContainerId === newContainerId) return;
+      if (newContainer.occupancy.length >= newContainer.capacity) {
+        alert('目标集装箱已满！');
+        return;
+      }
+
+      const oldContainer = appData.containers.find(c => c.id === oldContainerId);
+      const oldIndex = oldContainer.occupancy.findIndex(p => p.id === palletId);
+      if (oldIndex > -1) {
+        oldContainer.occupancy.splice(oldIndex, 1);
+      }
+
+      pallet.containerId = newContainerId;
+      newContainer.occupancy.push(pallet);
+    }
+
+    function addContainer() {
+      const newId = appData.containers.length > 0 
+        ? Math.max(...appData.containers.map(c => c.id)) + 1 
+        : 1;
+      const type = newId % 2 === 0 ? 'large' : 'small';
+      const capacity = type === 'large' ? 20 : 10;
+      
+      appData.containers.push({
+        id: newId,
+        type: type,
+        capacity: capacity,
+        occupancy: []
+      });
+
+      render();
+    }
+
+    function autoAllocate() {
+      const sortedOrders = [...appData.orders].sort((a, b) => {
+        const aUnallocated = a.pallets.filter(p => !p.containerId).length;
+        const bUnallocated = b.pallets.filter(p => !p.containerId).length;
+        return bUnallocated - aUnallocated;
+      });
+
+      const sortedContainers = [...appData.containers].sort((a, b) => {
+        const aEmpty = a.occupancy.length === 0;
+        const bEmpty = b.occupancy.length === 0;
+        if (aEmpty && !bEmpty) return -1;
+        if (!aEmpty && bEmpty) return 1;
+        return b.capacity - a.capacity;
+      });
+
+      sortedOrders.forEach(order => {
+        order.pallets.forEach(pallet => {
+          if (!pallet.containerId) {
+            for (let container of sortedContainers) {
+              if (container.occupancy.length < container.capacity) {
+                pallet.containerId = container.id;
+                container.occupancy.push(pallet);
+                order.allocatedPallets++;
+                order.unallocatedPallets--;
+                break;
+              }
+            }
+          }
+        });
+      });
+
+      render();
+    }
+
+    function renderReport() {
+      const tbody = document.getElementById('report-body');
+      tbody.innerHTML = '';
+
+      let currentProductNumber = appData.currentProductNumber;
+      const orderContainerGroups = {};
+
+      appData.orders.forEach(order => {
+        order.pallets.forEach(pallet => {
+          if (pallet.containerId) {
+            const key = `${order.productId}-${order.shipDate}-${pallet.containerId}`;
+            if (!orderContainerGroups[key]) {
+              orderContainerGroups[key] = {
+                productId: order.productId,
+                shipDate: order.shipDate,
+                containerId: pallet.containerId,
+                totalQuantity: 0,
+                pallets: []
+              };
+            }
+            orderContainerGroups[key].totalQuantity += pallet.quantity;
+            orderContainerGroups[key].pallets.push(pallet);
+          }
+        });
+      });
+
+      const sortedGroups = Object.values(orderContainerGroups).sort((a, b) => {
+        if (a.containerId !== b.containerId) {
+          return a.containerId - b.containerId;
+        }
+        return a.productId.localeCompare(b.productId);
+      });
+
+      const orderMergedGroups = {};
+      appData.orders.forEach(order => {
+        const key = `${order.productId}-${order.shipDate}`;
+        if (!orderMergedGroups[key]) {
+          orderMergedGroups[key] = {
+            productId: order.productId,
+            shipDate: order.shipDate,
+            totalQuantity: 0,
+            containerDetails: []
+          };
+        }
+        
+        const orderPallets = order.pallets.filter(p => p.containerId);
+        if (orderPallets.length > 0) {
+          orderMergedGroups[key].totalQuantity += orderPallets.reduce((sum, p) => sum + p.quantity, 0);
+          
+          const containerQuantities = {};
+          orderPallets.forEach(p => {
+            if (!containerQuantities[p.containerId]) {
+              containerQuantities[p.containerId] = 0;
+            }
+            containerQuantities[p.containerId] += p.quantity;
+          });
+          
+          Object.entries(containerQuantities).forEach(([cid, qty]) => {
+            orderMergedGroups[key].containerDetails.push({
+              containerId: parseInt(cid),
+              quantity: qty
+            });
+          });
+        }
+      });
+
+      Object.values(orderMergedGroups).forEach(group => {
+        group.containerDetails.sort((a, b) => a.containerId - b.containerId);
+        
+        group.containerDetails.forEach((detail, idx) => {
+          const startNum = currentProductNumber;
+          const endNum = currentProductNumber + detail.quantity - 1;
+          
+          const row = document.createElement('tr');
+          
+          if (idx === 0) {
+            row.innerHTML = `
+              <td class="merged-cell" rowspan="${group.containerDetails.length}">${group.productId}</td>
+              <td class="merged-cell" rowspan="${group.containerDetails.length}">${group.shipDate}</td>
+              <td class="merged-cell" rowspan="${group.containerDetails.length}">${group.totalQuantity}</td>
+              <td class="container-cell">${detail.containerId}</td>
+              <td class="range-cell">${startNum}</td>
+              <td class="range-cell">${endNum}</td>
+            `;
+          } else {
+            row.innerHTML = `
+              <td class="container-cell">${detail.containerId}</td>
+              <td class="range-cell">${startNum}</td>
+              <td class="range-cell">${endNum}</td>
+            `;
+          }
+          
+          tbody.appendChild(row);
+          
+          currentProductNumber = endNum + 1;
+        });
+      });
+
+      if (tbody.children.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+              暂无分配数据，请先在配置画面进行集装箱分配
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById(`${btn.dataset.tab}-view`).classList.add('active');
+        
+        if (btn.dataset.tab === 'report') {
+          renderReport();
+        }
+      });
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
