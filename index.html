@@ -614,6 +614,107 @@
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       }
     }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-lg);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .modal-body {
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-orange);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Edit Icon */
+    .edit-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-left: 6px;
+      cursor: pointer;
+      color: var(--accent-blue);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -694,6 +795,30 @@
           <tbody id="report-body">
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for editing pallet capacity -->
+  <div id="palletCapacityModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">修改托盘容量</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="modalProductId">产品编号</label>
+          <input type="text" id="modalProductId" class="form-input" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="modalPalletCapacity">托盘容量 (本/托)</label>
+          <input type="number" id="modalPalletCapacity" class="form-input" min="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="savePalletCapacity()">保存</button>
       </div>
     </div>
   </div>
@@ -821,7 +946,10 @@
             </div>
             <div class="order-info-item">
               <div class="order-info-label">托盘容量</div>
-              <div class="order-info-value">${product.palletCapacity}本/托</div>
+              <div class="order-info-value">
+                <span>${product.palletCapacity}本/托</span>
+                <span class="edit-icon" onclick="openModal('${order.productId}', ${product.palletCapacity})">✏️</span>
+              </div>
             </div>
           </div>
           <div class="pallet-info">
@@ -1181,6 +1309,81 @@
         }
       });
     });
+
+    // 弹窗相关函数
+    let currentEditingProductId = null;
+
+    function openModal(productId, currentCapacity) {
+      currentEditingProductId = productId;
+      const product = appData.products[productId];
+      
+      document.getElementById('modalProductId').value = productId;
+      document.getElementById('modalPalletCapacity').value = currentCapacity;
+      document.getElementById('palletCapacityModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('palletCapacityModal').classList.remove('show');
+      currentEditingProductId = null;
+    }
+
+    function savePalletCapacity() {
+      const newCapacity = parseInt(document.getElementById('modalPalletCapacity').value);
+      if (isNaN(newCapacity) || newCapacity < 1) {
+        alert('托盘容量必须是正整数');
+        return;
+      }
+
+      updatePalletCapacity(currentEditingProductId, newCapacity);
+      closeModal();
+    }
+
+    // 更新托盘容量函数
+    function updatePalletCapacity(productId, newCapacity) {
+      newCapacity = parseInt(newCapacity);
+      if (isNaN(newCapacity) || newCapacity < 1) {
+        alert('托盘容量必须是正整数');
+        render();
+        return;
+      }
+
+      const product = appData.products[productId];
+      product.palletCapacity = newCapacity;
+
+      appData.orders.forEach(order => {
+        if (order.productId === productId) {
+          // 重新计算托盘总数
+          order.totalPallets = Math.ceil(order.quantity / newCapacity);
+          
+          // 重置分配状态
+          order.allocatedPallets = 0;
+          order.unallocatedPallets = order.totalPallets;
+          
+          // 重新生成托盘列表
+          order.pallets = [];
+          for (let i = 0; i < order.totalPallets; i++) {
+            order.pallets.push({
+              id: `${order.id}-${i}`,
+              orderId: order.id,
+              palletIndex: i,
+              containerId: null,
+              quantity: Math.min(newCapacity, order.quantity - i * newCapacity)
+            });
+          }
+
+          // 重置所有容器中的该产品托盘
+          appData.containers.forEach(container => {
+            container.occupancy = container.occupancy.filter(pallet => {
+              const palletOrder = appData.orders.find(o => o.id === pallet.orderId);
+              return palletOrder && palletOrder.productId !== productId;
+            });
+          });
+        }
+      });
+
+      // 重新渲染界面
+      render();
+    }
 
     loadData();
   </script>
